@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">MPlay</string>
+
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+
+    <!-- Navigation -->
+    <string name="navigation_option_1">Option A</string>
+    <string name="navigation_option_2">Option B</string>
+</resources>
