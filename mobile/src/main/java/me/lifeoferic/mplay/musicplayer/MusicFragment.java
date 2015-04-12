@@ -66,6 +66,7 @@ public class MusicFragment extends MPlayFragment {
 	@Override
 	public void onStart() {
 		super.onStart();
+		Log.d(TAG, "onStart()");
 		mMusicList = new ArrayList<>();
 		getSongList();
 		sort();
@@ -88,16 +89,16 @@ public class MusicFragment extends MPlayFragment {
 	@Override
 	public void onResume(){
 		super.onResume();
-		if(paused){
+		if (paused) {
 			setController();
-			paused=false;
+			paused = false;
 		}
 	}
 
 	@Override
 	public void onPause(){
 		super.onPause();
-		paused=true;
+		paused = true;
 	}
 
 	@Override
@@ -161,90 +162,96 @@ public class MusicFragment extends MPlayFragment {
 	}
 
 	public void setController() {
-		controller = new MusicPlayerController(getActivity());
-		View.OnClickListener playNextListener = new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				playNext();
-			}
-		};
-		View.OnClickListener playPrevListener = new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				playPrev();
-			}
-		};
-		controller.setPrevNextListeners(playNextListener, playPrevListener);
-		MediaController.MediaPlayerControl control = new MediaController.MediaPlayerControl() {
+		if (controller == null) {
+			System.out.println("controller set");
+			controller = new MusicPlayerController(getActivity());
+			View.OnClickListener playNextListener = new View.OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					playNext();
+				}
+			};
+			View.OnClickListener playPrevListener = new View.OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					playPrev();
+				}
+			};
+			controller.setPrevNextListeners(playNextListener, playPrevListener);
+			MediaController.MediaPlayerControl control = new MediaController.MediaPlayerControl() {
 
-			@Override
-			public void start() {
-				Log.d(TAG, "start");
-				musicService.play();
-			}
+				@Override
+				public void start() {
+					Log.d(TAG, "start");
+					playbackPaused = false;
+					musicService.play();
+				}
 
-			@Override
-			public void pause() {
-				Log.d(TAG, "pause");
-				playbackPaused = true;
-				musicService.pause();
-			}
+				@Override
+				public void pause() {
+					Log.d(TAG, "pause");
+					playbackPaused = true;
+					musicService.pause();
+				}
 
-			@Override
-			public int getDuration() {
-				if(musicService != null && musicBound && musicService.isPlaying())
-					return musicService.getDuration();
-				else return 0;
-			}
+				@Override
+				public int getDuration() {
+					if (musicService != null && musicBound && musicService.isPlaying())
+						return musicService.getDuration();
+					else
+						return 0;
+				}
 
-			@Override
-			public int getCurrentPosition() {
-				if(musicService != null && musicBound && musicService.isPlaying())
-					return musicService.getPosition();
-				else return 0;
-			}
+				@Override
+				public int getCurrentPosition() {
+					if (musicService != null && musicBound && musicService.isPlaying())
+						return musicService.getPosition();
+					else
+						return 0;
+				}
 
-			@Override
-			public void seekTo(int i) {
-				Log.d(TAG, "seekTo");
-				musicService.seek(i);
-			}
+				@Override
+				public void seekTo(int i) {
+					Log.d(TAG, "seekTo");
+					musicService.seek(i);
+				}
 
-			@Override
-			public boolean isPlaying() {
-				if(musicService != null && musicBound)
-					return musicService.isPlaying();
-				return false;
-			}
+				@Override
+				public boolean isPlaying() {
+					if (musicService != null && musicBound)
+						return musicService.isPlaying();
+					return false;
+				}
 
-			@Override
-			public int getBufferPercentage() {
-				return 0;
-			}
+				@Override
+				public int getBufferPercentage() {
+					return 0;
+				}
 
-			@Override
-			public boolean canPause() {
-				return true;
-			}
+				@Override
+				public boolean canPause() {
+					return true;
+				}
 
-			@Override
-			public boolean canSeekBackward() {
-				return true;
-			}
+				@Override
+				public boolean canSeekBackward() {
+					return true;
+				}
 
-			@Override
-			public boolean canSeekForward() {
-				return true;
-			}
+				@Override
+				public boolean canSeekForward() {
+					return true;
+				}
 
-			@Override
-			public int getAudioSessionId() {
-				return 0;
-			}
-		};
-		controller.setMediaPlayer(control);
-		controller.setAnchorView(mMusicListView);
-		controller.setEnabled(true);
+				@Override
+				public int getAudioSessionId() {
+					return 0;
+				}
+			};
+			controller.setMediaPlayer(control);
+			controller.setAnchorView(mMusicListView);
+			controller.setEnabled(true);
+		}
 	}
 
 	private void playNext() {
@@ -268,6 +275,7 @@ public class MusicFragment extends MPlayFragment {
 	}
 
 	public void songPicked(int position){
+		Log.d(TAG, "song picked");
 		musicService.setSong(position);
 		musicService.playSong();
 		if (playbackPaused) {

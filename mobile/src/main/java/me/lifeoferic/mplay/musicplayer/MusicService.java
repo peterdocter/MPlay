@@ -26,6 +26,8 @@ import me.lifeoferic.mplay.models.Music;
 public class MusicService extends Service implements MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener,
 		MediaPlayer.OnCompletionListener {
 
+	private static final String TAG = MusicService.class.getSimpleName();
+
 	private String songTitle="";
 	private static final int NOTIFY_ID = 1;
 
@@ -40,8 +42,8 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 	public void onCreate() {
 		super.onCreate();
 		currentSongPosition = 0;
-		initMusicPlayer();
 		rand = new Random();
+		initMusicPlayer();
 	}
 
 	@Override
@@ -59,6 +61,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 	@Override
 	public void onPrepared(MediaPlayer mp) {
 		//start playback
+		Log.d(TAG, "onPrepared");
 		mp.start();
 		Intent notIntent = new Intent(this, MainActivity.class);
 		notIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -80,19 +83,15 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
 	@Override
 	public boolean onError(MediaPlayer mp, int what, int extra) {
+		Log.d(TAG, "onError");
 		mp.reset();
 		return false;
 	}
 
 	@Override
 	public void onCompletion(MediaPlayer mp) {
-		if (player.isPlaying()) {
-			mp.stop();
-			mp.release();
-
-		}
-
-		if (player.getCurrentPosition() < 0) {
+		Log.d(TAG, "onCompletion");
+		if (player.getCurrentPosition() >= 0) {
 			mp.reset();
 			playNext();
 		}
@@ -119,6 +118,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 	}
 
 	public void initMusicPlayer() {
+		Log.d(TAG, "initialize");
 		player = new MediaPlayer();
 		player.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
 		player.setAudioStreamType(AudioManager.STREAM_MUSIC);
