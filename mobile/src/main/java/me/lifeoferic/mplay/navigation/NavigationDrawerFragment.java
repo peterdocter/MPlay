@@ -18,10 +18,6 @@ public class NavigationDrawerFragment extends Fragment {
 
 	private ListView mListView;
 
-	public NavigationDrawerFragment() {
-
-	}
-
 	@Nullable
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
