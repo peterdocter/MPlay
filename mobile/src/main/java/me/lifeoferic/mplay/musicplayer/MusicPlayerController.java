@@ -4,13 +4,12 @@ import android.app.Activity;
 import android.content.Context;
 import android.util.Log;
 import android.view.KeyEvent;
-
-import me.lifeoferic.mplay.widget.MusicController;
+import android.widget.MediaController;
 
 /**
  * Created by socheong on 4/11/15.
  */
-public class MusicPlayerController extends MusicController {
+public class MusicPlayerController extends MediaController {
 
 	private static final String TAG = MusicPlayerController.class.getSimpleName();
 

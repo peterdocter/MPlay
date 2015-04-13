@@ -13,6 +13,7 @@ import android.os.IBinder;
 import android.os.PowerManager;
 import android.util.Log;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -28,14 +29,14 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
 	private static final String TAG = MusicService.class.getSimpleName();
 
-	private String songTitle="";
+	private String songTitle = "";
 	private static final int NOTIFY_ID = 1;
 
 	private MediaPlayer player;
 	private ArrayList<Music> musicList;
 	private int currentSongPosition;
 	private final IBinder musicBind = new MusicBinder();
-	private boolean shuffle = false;
+//	private boolean shuffle = false;
 	private Random rand;
 
 	@Override
@@ -60,9 +61,9 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
 	@Override
 	public void onPrepared(MediaPlayer mp) {
-		//start playback
 		Log.d(TAG, "onPrepared");
 		mp.start();
+
 		Intent notIntent = new Intent(this, MainActivity.class);
 		notIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 		PendingIntent pendInt = PendingIntent.getActivity(this, 0,
@@ -91,10 +92,10 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 	@Override
 	public void onCompletion(MediaPlayer mp) {
 		Log.d(TAG, "onCompletion");
-		if (player.getCurrentPosition() >= 0) {
-			mp.reset();
+			releaseMediaPlayer();
+			initMusicPlayer();
 			playNext();
-		}
+//		}
 	}
 
 	@Override
@@ -127,7 +128,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 		player.setOnErrorListener(this);
 	}
 
-	public void setList(ArrayList<Music> songs){
+	public void setList(ArrayList<Music> songs) {
 		musicList = songs;
 	}
 
@@ -142,42 +143,57 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 	}
 
 	public void playSong() {
-		player.reset();
-		Music playSong = musicList.get(currentSongPosition);
-		songTitle = playSong.getTitle();
-		long currentSong = playSong.getID();
-		Uri trackUri = ContentUris.withAppendedId(
-				android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-				currentSong);
+		Log.d(TAG, "playSong: " + currentSongPosition);
 
 		try {
+			player.reset();
+			Music playSong = musicList.get(currentSongPosition);
+			Log.d(TAG, "songLength: " + playSong.getLength());
+			songTitle = playSong.getTitle();
+			long currentSong = playSong.getID();
+			Uri trackUri = ContentUris.withAppendedId(
+					android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+					currentSong);
 			player.setDataSource(getApplicationContext(), trackUri);
-		} catch(Exception e) {
-			Log.e("MUSIC SERVICE", "Error setting data source", e);
+			player.prepare();
+			player.start();
+			// Displaying Song title
+			songTitle = playSong.getTitle();
+//			songTitleLabel.setText(songTitle);
+
+			// Changing Button Image to pause image
+//			btnPlay.setImageResource(R.drawable.btn_pause);
+
+			// set Progress bar values
+//			songProgressBar.setProgress(0);
+//			songProgressBar.setMax(100);
+
+			// Updating progress bar
+//			updateProgressBar();
+		} catch (IllegalArgumentException|IllegalStateException|IOException e) {
+			e.printStackTrace();
 		}
-		player.prepareAsync();
 	}
 
 	public void playPrev() {
-		currentSongPosition--;
-		if (currentSongPosition < 0) {
+		Log.d(TAG, "playPrev");
+		if (currentSongPosition > 0) {
+			currentSongPosition = currentSongPosition - 1;
+		} else {
+			// play last song
 			currentSongPosition = musicList.size() - 1;
 		}
 		playSong();
 	}
 
 	public void playNext() {
-		if (shuffle) {
-			int newSong = currentSongPosition;
-			while (newSong == currentSongPosition) {
-				newSong = rand.nextInt(musicList.size());
-			}
-			currentSongPosition = newSong;
+		Log.d(TAG, "playNext");
+
+		if (currentSongPosition < (musicList.size() - 1)) {
+			currentSongPosition = currentSongPosition + 1;
 		} else {
-			currentSongPosition++;
-			if (currentSongPosition >= musicList.size()) {
-				currentSongPosition = 0;
-			}
+			// play first song
+			currentSongPosition = 0;
 		}
 		playSong();
 	}
@@ -207,6 +223,6 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 	}
 
 	public void toggleShuffle(){
-		shuffle = !shuffle;
+//		shuffle = !shuffle;
 	}
 }
