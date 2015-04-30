@@ -4,12 +4,6 @@
               android:layout_width="match_parent"
               android:layout_height="match_parent">
 
-    <me.lifeoferic.mplay.musicplayer.views.MPlayerView
-        android:id="@+id/music_player_view"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"/>
-
     <ListView
         android:id="@+id/music_listview"
         android:layout_width="match_parent"

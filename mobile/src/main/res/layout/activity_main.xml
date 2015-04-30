@@ -8,12 +8,12 @@
     tools:context=".MainActivity">
 
     <!-- Main layout -->
-    <LinearLayout
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
+
         <android.support.v7.widget.Toolbar
-            xmlns:android="http://schemas.android.com/apk/res/android"
             xmlns:app="http://schemas.android.com/apk/res-auto"
             android:id="@+id/toolbar"
             app:theme="@style/ThemeOverlay.AppCompat.ActionBar"
@@ -22,11 +22,19 @@
             android:minHeight="?attr/actionBarSize"
             android:background="@color/primary"/>
 
+        <me.lifeoferic.mplay.musicplayer.views.MPlayerView
+            android:id="@+id/music_player_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"/>
+
         <FrameLayout
             android:id="@+id/main_fragment_container"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"/>
-    </LinearLayout>
+            android:layout_height="match_parent"
+            android:layout_below="@id/toolbar"
+            android:layout_above="@id/music_player_view"/>
+    </RelativeLayout>
 
     <!-- Nav drawer -->
     <fragment

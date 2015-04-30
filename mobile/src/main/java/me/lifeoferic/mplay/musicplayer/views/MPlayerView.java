@@ -9,8 +9,8 @@ import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import me.lifeoferic.mplay.MainActivity;
 import me.lifeoferic.mplay.R;
-import me.lifeoferic.mplay.musicplayer.MusicPlayerFragment;
 
 /**
  * Created by socheong on 4/11/15.
@@ -26,7 +26,8 @@ public class MPlayerView extends LinearLayout {
 	private TextView mDurationView;
 	private TextView mCurrentTimeView;
 	private SeekBar mSeekBar;
-	private MusicPlayerFragment.MusicFragmentListener mFragmentListener;
+
+	private MainActivity.MusicFragmentListener mFragmentListener;
 
 	public MPlayerView(Context context) {
 		super(context);
@@ -48,7 +49,7 @@ public class MPlayerView extends LinearLayout {
 		setupListeners();
 	}
 
-	public void setMusicFragmentListener(MusicPlayerFragment.MusicFragmentListener listener) {
+	public void setMusicFragmentListener(MainActivity.MusicFragmentListener listener) {
 		mFragmentListener = listener;
 	}
 
@@ -84,11 +85,10 @@ public class MPlayerView extends LinearLayout {
 		mPlayButton.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View view) {
+				view.setSelected(!view.isSelected());
 				if (view.isSelected()) {
-					view.setSelected(false);
 					mFragmentListener.play();
 				} else {
-					view.setSelected(true);
 					mFragmentListener.pause();
 				}
 			}
@@ -105,22 +105,22 @@ public class MPlayerView extends LinearLayout {
 				mFragmentListener.rewind();
 			}
 		});
-		mSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-			@Override
-			public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-
-			}
-
-			@Override
-			public void onStartTrackingTouch(SeekBar seekBar) {
-
-			}
-
-			@Override
-			public void onStopTrackingTouch(SeekBar seekBar) {
-
-			}
-		});
+//		mSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+//			@Override
+//			public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+//
+//			}
+//
+//			@Override
+//			public void onStartTrackingTouch(SeekBar seekBar) {
+//
+//			}
+//
+//			@Override
+//			public void onStopTrackingTouch(SeekBar seekBar) {
+//
+//			}
+//		});
 	}
 
 	public void updateSeekbar(long current, long total) {
