@@ -18,11 +18,9 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.Button;
 import android.widget.ListView;
 import android.widget.MediaController;
-import android.widget.ProgressBar;
-import android.widget.SeekBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -32,13 +30,14 @@ import java.util.Comparator;
 import me.lifeoferic.mplay.MPlayFragment;
 import me.lifeoferic.mplay.R;
 import me.lifeoferic.mplay.models.Music;
+import me.lifeoferic.mplay.musicplayer.views.MPlayerView;
 
 /**
  * Music Player Fragment
  */
-public class MusicFragment extends MPlayFragment {
+public class MusicPlayerFragment extends MPlayFragment {
 
-	private static final String TAG = MusicFragment.class.getSimpleName();
+	private static final String TAG = MusicPlayerFragment.class.getSimpleName();
 
 	private ArrayList<Music> mMusicList;
 	private boolean paused = false;
@@ -50,20 +49,21 @@ public class MusicFragment extends MPlayFragment {
 	Handler seekHandler = new Handler();
 
 	private ListView mMusicListView;
-	private Button mBackButton;
-	private Button mPlayButton;
-	private Button mNextButton;
-	private SeekBar mSeekBar;
+	private TextView mTitleView;
+	private TextView mDurationView;
+	private TextView mCurrentTimeView;
+	private MPlayerView mMusicPlayerView;
+
+	public static MusicPlayerFragment newInstance() {
+		return new MusicPlayerFragment();
+	}
 
 	@Nullable
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		View view = inflater.inflate(R.layout.fragment_mp, container, false);
 		mMusicListView = (ListView) view.findViewById(R.id.music_listview);
-		mBackButton = (Button) view.findViewById(R.id.back_button);
-		mPlayButton = (Button) view.findViewById(R.id.play_button);
-		mNextButton = (Button) view.findViewById(R.id.next_button);
-		mSeekBar = (SeekBar) view.findViewById(R.id.seekbar);
+		mMusicPlayerView = (MPlayerView) view.findViewById(R.id.music_player_view);
 		return view;
 	}
 
@@ -88,29 +88,29 @@ public class MusicFragment extends MPlayFragment {
 				songPicked(position);
 			}
 		});
-		mSeekBar.setProgress(0);
-		mSeekBar.setMax(100);
-		mSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-			@Override
-			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-				System.out.println("Progress: " + progress);
-				if (fromUser) {
-					mController.seekTo(progress);
-				}
-				mSeekBar.setProgress(progress);
-			}
-
-			@Override
-			public void onStartTrackingTouch(SeekBar seekBar) {
-
-			}
-
-			@Override
-			public void onStopTrackingTouch(SeekBar seekBar) {
-				int seekValue = seekBar.getProgress();
-			}
-		});
-		setController();
+//		mSeekBar.setProgress(0);
+//		mSeekBar.setMax(100);
+//		mSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+//			@Override
+//			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+//				System.out.println("Progress: " + progress);
+//				if (fromUser) {
+//					mController.seekTo(progress);
+//				}
+//				mSeekBar.setProgress(progress);
+//			}
+//
+//			@Override
+//			public void onStartTrackingTouch(SeekBar seekBar) {
+//
+//			}
+//
+//			@Override
+//			public void onStopTrackingTouch(SeekBar seekBar) {
+//				int seekValue = seekBar.getProgress();
+//			}
+//		});
+		setupController();
 		if (playIntent == null) {
 			playIntent = new Intent(getActivity(), MusicService.class);
 			getActivity().bindService(playIntent, musicConnection, Context.BIND_AUTO_CREATE);
@@ -122,7 +122,7 @@ public class MusicFragment extends MPlayFragment {
 	public void onResume(){
 		super.onResume();
 		if (paused) {
-			setController();
+			setupController();
 			paused = false;
 		}
 	}
@@ -200,7 +200,7 @@ public class MusicFragment extends MPlayFragment {
 
 	public void update() {
 		System.out.println("update: " + mController.getCurrentPosition());
-		mSeekBar.setProgress(mController.getCurrentPosition() / 7000);
+//		mSeekBar.setProgress(mController.getCurrentPosition() / 7000);
 		seekHandler.postDelayed(run, 1000);
 	}
 
@@ -214,34 +214,49 @@ public class MusicFragment extends MPlayFragment {
 		}
 	};
 
-	public void setController() {
-		View.OnClickListener playNextListener = new View.OnClickListener() {
+	public interface MusicFragmentListener {
+		public void play();
+		public void pause();
+		public void next();
+		public void previous();
+		public void rewind();
+		public void forward();
+	}
+
+	public void setupController() {
+		MusicFragmentListener musicFragmentListener = new MusicFragmentListener() {
 			@Override
-			public void onClick(View v) {
+			public void play() {
+				mController.start();
+			}
+
+			@Override
+			public void pause() {
+				mController.pause();
+			}
+
+			@Override
+			public void next() {
 				playNext();
 			}
-		};
-		mNextButton.setOnClickListener(playNextListener);
-		View.OnClickListener playPrevListener = new View.OnClickListener() {
+
 			@Override
-			public void onClick(View v) {
+			public void previous() {
 				playPrev();
 			}
-		};
-		mBackButton.setOnClickListener(playPrevListener);
 
-		mPlayButton.setOnClickListener(new View.OnClickListener() {
 			@Override
-			public void onClick(View view) {
-				if (view.isSelected()) {
-					view.setSelected(false);
-					mController.start();
-				} else {
-					view.setSelected(true);
-					mController.pause();
-				}
+			public void rewind() {
+//				rewindTrack();
 			}
-		});
+
+			@Override
+			public void forward() {
+//				forwardTrack();
+			}
+		};
+		mMusicPlayerView.setMusicFragmentListener(musicFragmentListener);
+
 		mController = new MediaController.MediaPlayerControl() {
 
 			@Override
@@ -280,14 +295,15 @@ public class MusicFragment extends MPlayFragment {
 
 			@Override
 			public void seekTo(int i) {
-				Log.d(TAG, "seekTo");
+				Log.d(TAG, "seekTo: " + i);
 				musicService.seek(i);
 			}
 
 			@Override
 			public boolean isPlaying() {
-				if (musicService != null && musicBound)
+				if (musicService != null && musicBound) {
 					return musicService.isPlaying();
+				}
 				return false;
 			}
 
@@ -322,7 +338,7 @@ public class MusicFragment extends MPlayFragment {
 		Log.d(TAG, "playNext");
 		musicService.playNext();
 		if (playbackPaused) {
-			setController();
+			setupController();
 			playbackPaused = false;
 		}
 	}
@@ -331,7 +347,7 @@ public class MusicFragment extends MPlayFragment {
 		Log.d(TAG, "playPrev");
 		musicService.playPrev();
 		if (playbackPaused) {
-			setController();
+			setupController();
 			playbackPaused = false;
 		}
 	}
@@ -341,7 +357,7 @@ public class MusicFragment extends MPlayFragment {
 		musicService.setSong(position);
 		musicService.playSong();
 		if (playbackPaused) {
-			setController();
+			setupController();
 			playbackPaused = false;
 		}
 	}

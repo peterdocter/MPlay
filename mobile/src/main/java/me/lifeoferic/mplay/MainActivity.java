@@ -13,7 +13,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
-import me.lifeoferic.mplay.musicplayer.MusicFragment;
+import me.lifeoferic.mplay.musicplayer.MusicPlayerFragment;
 
 
 public class MainActivity extends ActionBarActivity {
@@ -39,7 +39,7 @@ public class MainActivity extends ActionBarActivity {
 		super.onStart();
 		setupActionToolBar();
 		setupDrawerLayout();
-		openFragment(new MusicFragment());
+		openFragment(MusicPlayerFragment.newInstance());
 	}
 
 	/* Called whenever we call invalidateOptionsMenu() */
@@ -47,8 +47,11 @@ public class MainActivity extends ActionBarActivity {
 	public boolean onPrepareOptionsMenu(Menu menu) {
 		// If the nav drawer is open, hide action items related to the content view
 		boolean drawerOpen = mDrawerLayout.isDrawerOpen(GravityCompat.START);
-		menu.findItem(R.id.action_shuffle).setVisible(!drawerOpen);
-		menu.findItem(R.id.action_end).setVisible(!drawerOpen);
+		//TODO:
+//		menu.findItem(R.id.action_shuffle).setVisible(!drawerOpen);
+//		menu.findItem(R.id.action_end).setVisible(!drawerOpen);
+		menu.findItem(R.id.action_shuffle).setVisible(false);
+		menu.findItem(R.id.action_end).setVisible(false);
 		return super.onPrepareOptionsMenu(menu);
 	}
 
@@ -96,15 +99,14 @@ public class MainActivity extends ActionBarActivity {
 	public void setupDrawerLayout() {
 		mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
 		mDrawerToggle= new ActionBarDrawerToggle(this, mDrawerLayout, mToolbar, R.string.app_name, R.string.app_name) {
+
 			@Override
 			public void onDrawerClosed(View view) {
-				getSupportActionBar().setTitle("");
 				invalidateOptionsMenu();
 			}
 
 			@Override
 			public void onDrawerOpened(View drawerView) {
-				getSupportActionBar().setTitle("");
 				invalidateOptionsMenu();
 			}
 		};

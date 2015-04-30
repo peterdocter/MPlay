@@ -24,12 +24,18 @@ public class NavigationAdapter extends BaseAdapter {
 
 	static {
 		mIconArrayList = new ArrayList<>();
-		mIconArrayList.add(R.drawable.ic_action_android);
-		mIconArrayList.add(R.drawable.ic_action_android);
+		mIconArrayList.add(null);
+		mIconArrayList.add(null);
+		mIconArrayList.add(null);
+		mIconArrayList.add(R.drawable.ic_action_settings);
+		mIconArrayList.add(R.drawable.ic_action_info);
 
 		mTextArrayList = new ArrayList<>();
-		mTextArrayList.add(R.string.navigation_option_1);
-		mTextArrayList.add(R.string.navigation_option_2);
+		mTextArrayList.add(R.string.navigation_option_player);
+		mTextArrayList.add(R.string.navigation_option_library);
+		mTextArrayList.add(R.string.navigation_option_playlists);
+		mTextArrayList.add(R.string.navigation_option_settings);
+		mTextArrayList.add(R.string.navigation_option_about);
 	}
 
 	public NavigationAdapter(Context context) {
@@ -65,7 +71,12 @@ public class NavigationAdapter extends BaseAdapter {
 			holder = (NavigationViewHolder) convertView.getTag();
 		}
 
-		holder.iconImageView.setImageResource(mIconArrayList.get(i));
+		Integer iconResource = mIconArrayList.get(i);
+		if (iconResource != null) {
+			holder.iconImageView.setImageResource(iconResource);
+		} else {
+			holder.iconImageView.setVisibility(View.GONE);
+		}
 		holder.optionTextView.setText(mTextArrayList.get(i));
 
 		return convertView;

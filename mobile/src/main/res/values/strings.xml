@@ -5,6 +5,20 @@
     <string name="action_settings">Settings</string>
 
     <!-- Navigation -->
-    <string name="navigation_option_1">Option A</string>
-    <string name="navigation_option_2">Option B</string>
+    <string name="navigation_option_player">Player</string>
+    <string name="navigation_option_library">Library</string>
+    <string name="navigation_option_playlists">Playlists</string>
+    <string name="navigation_option_settings">Settings</string>
+    <string name="navigation_option_about">About</string>
+
+    <!-- About -->
+    <string name="about_legal_button">Legal</string>
+    <string name="about_terms_button">Terms &amp; Conditions</string>
+    <string name="about_developer_button">About Developer</string>
+
+
+
+
+
+
 </resources>

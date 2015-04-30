@@ -4,6 +4,22 @@
     <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
         <!-- in order to use the support action bar -->
         <item name="windowActionBar">false</item>
+        <item name="colorPrimaryDark">@color/primary_dark</item>
+        <item name="colorPrimary">@color/primary</item>
+        <item name="android:textColor">@color/blue_grey</item>
+        <item name="android:textColorPrimary">@color/blue_grey</item>
+        <item name="android:windowBackground">@color/google_grey</item>
+        <item name="android:navigationBarColor">@color/primary_dark</item>
+        <item name="android:textSize">16sp</item>
+    </style>
+
+    <style name="ButtonStyle" parent="Widget.AppCompat.Button">
+        <item name="android:layout_width">150dp</item>
+        <item name="android:layout_height">wrap_content</item>
+    </style>
+
+    <style name="SecondaryActionButtonStyle" parent="ButtonStyle">
+
     </style>
 
 </resources>
