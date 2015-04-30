@@ -211,7 +211,9 @@ public class MainActivity extends ActionBarActivity {
 
 	public void songPicked(ArrayList<Music> musicList){
 		Log.d(TAG, "song picked");
+		System.out.println("music list size: " + musicList.size());
 		mMusicList = musicList;
+		mMusicService.setList(mMusicList);
 		mMusicService.setSong(0);
 		mMusicService.playSong();
 		if (isPlaybackPaused) {
@@ -220,7 +222,6 @@ public class MainActivity extends ActionBarActivity {
 	}
 
 	public void update() {
-		System.out.println("update: " + mController.getCurrentPosition());
 		//		mSeekBar.setProgress(mController.getCurrentPosition() / 7000);
 		mSeekHandler.postDelayed(run, 1000);
 	}
@@ -236,6 +237,7 @@ public class MainActivity extends ActionBarActivity {
 	};
 
 	private void setupPlayer() {
+		mMusicList = new ArrayList<>();
 		mController = new MediaController.MediaPlayerControl() {
 
 			@Override
@@ -323,22 +325,30 @@ public class MainActivity extends ActionBarActivity {
 	private MusicFragmentListener musicFragmentListener = new MusicFragmentListener() {
 		@Override
 		public void play() {
-			mController.start();
+			if (mMusicList.size() > 0) {
+				mController.start();
+			}
 		}
 
 		@Override
 		public void pause() {
-			mController.pause();
+			if (mMusicList.size() > 0) {
+				mController.pause();
+			}
 		}
 
 		@Override
 		public void next() {
-			playNext();
+			if (mMusicList.size() > 0) {
+				playNext();
+			}
 		}
 
 		@Override
 		public void previous() {
-			playPrev();
+			if (mMusicList.size() > 0) {
+				playPrev();
+			}
 		}
 
 		@Override
