@@ -47,6 +47,7 @@ public class MPlayerView extends LinearLayout {
 	private void initialize() {
 		setupViews();
 		setupListeners();
+		setupSeekbar();
 	}
 
 	public void setMusicFragmentListener(MainActivity.MusicFragmentListener listener) {
@@ -105,26 +106,36 @@ public class MPlayerView extends LinearLayout {
 				mFragmentListener.rewind();
 			}
 		});
-//		mSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-//			@Override
-//			public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-//
-//			}
-//
-//			@Override
-//			public void onStartTrackingTouch(SeekBar seekBar) {
-//
-//			}
-//
-//			@Override
-//			public void onStopTrackingTouch(SeekBar seekBar) {
-//
-//			}
-//		});
 	}
 
 	public void updateSeekbar(long current, long total) {
 		int progress = (int) (100 * current / total);
 		mSeekBar.setProgress(progress);
+	}
+
+	private void setupSeekbar() {
+		mSeekBar.setProgress(0);
+		mSeekBar.setMax(100);
+		mSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+			@Override
+			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+				System.out.println("Progress: " + progress);
+				if (fromUser) {
+					mFragmentListener.seekTo(progress);
+				}
+
+				mSeekBar.setProgress(progress);
+			}
+
+			@Override
+			public void onStartTrackingTouch(SeekBar seekBar) {
+
+			}
+
+			@Override
+			public void onStopTrackingTouch(SeekBar seekBar) {
+				int seekValue = seekBar.getProgress();
+			}
+		});
 	}
 }

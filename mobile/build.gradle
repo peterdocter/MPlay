@@ -24,4 +24,6 @@ dependencies {
     wearApp project(':wear')
     compile 'com.android.support:appcompat-v7:22.1.0'
     compile 'com.google.android.gms:play-services:7.0.0'
+    // smooth progress bar
+    //tab pager
 }

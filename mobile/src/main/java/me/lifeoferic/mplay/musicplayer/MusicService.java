@@ -36,14 +36,11 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 	private ArrayList<Music> musicList;
 	private int currentSongPosition;
 	private final IBinder musicBind = new MusicBinder();
-//	private boolean shuffle = false;
-	private Random rand;
 
 	@Override
 	public void onCreate() {
 		super.onCreate();
 		currentSongPosition = 0;
-		rand = new Random();
 		initMusicPlayer();
 	}
 
@@ -95,7 +92,6 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 			releaseMediaPlayer();
 			initMusicPlayer();
 			playNext();
-//		}
 	}
 
 	@Override
@@ -220,9 +216,5 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
 	public void play(){
 		player.start();
-	}
-
-	public void toggleShuffle(){
-//		shuffle = !shuffle;
 	}
 }

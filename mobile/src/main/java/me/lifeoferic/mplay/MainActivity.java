@@ -115,7 +115,6 @@ public class MainActivity extends ActionBarActivity {
 		switch (item.getItemId()) {
 			case R.id.action_shuffle:
 				Toast.makeText(this, "SHUFFLE", Toast.LENGTH_SHORT).show();
-				mMusicService.toggleShuffle();
 				break;
 			case R.id.action_end:
 				Toast.makeText(this, "END", Toast.LENGTH_SHORT).show();
@@ -222,7 +221,7 @@ public class MainActivity extends ActionBarActivity {
 	}
 
 	public void update() {
-		//		mSeekBar.setProgress(mController.getCurrentPosition() / 7000);
+//		mSeekBar.setProgress(mController.getCurrentPosition() / 7000);
 		mSeekHandler.postDelayed(run, 1000);
 	}
 
@@ -360,32 +359,12 @@ public class MainActivity extends ActionBarActivity {
 		public void forward() {
 			//				forwardTrack();
 		}
-	};
 
-	private void setupSeekbar() {
-		//		mSeekBar.setProgress(0);
-		//		mSeekBar.setMax(100);
-		//		mSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-		//			@Override
-		//			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-		//				System.out.println("Progress: " + progress);
-		//				if (fromUser) {
-		//					mController.seekTo(progress);
-		//				}
-		//				mSeekBar.setProgress(progress);
-		//			}
-		//
-		//			@Override
-		//			public void onStartTrackingTouch(SeekBar seekBar) {
-		//
-		//			}
-		//
-		//			@Override
-		//			public void onStopTrackingTouch(SeekBar seekBar) {
-		//				int seekValue = seekBar.getProgress();
-		//			}
-		//		});
-	}
+		@Override
+		public void seekTo(int progress) {
+			mController.seekTo(progress);
+		}
+	};
 
 	private void playerOnResume() {
 		if (isPaused) {
@@ -410,5 +389,6 @@ public class MainActivity extends ActionBarActivity {
 		public void previous();
 		public void rewind();
 		public void forward();
+		public void seekTo(int progress);
 	}
 }
