@@ -1,7 +1,9 @@
 package me.lifeoferic.mplay.musicplayer.views;
 
+import android.app.Activity;
 import android.content.Context;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageButton;
@@ -9,7 +11,10 @@ import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import java.util.Timer;
+
 import me.lifeoferic.mplay.MainActivity;
+import me.lifeoferic.mplay.PlayerTimer;
 import me.lifeoferic.mplay.R;
 import me.lifeoferic.mplay.Utils;
 import me.lifeoferic.mplay.models.Music;
@@ -19,6 +24,8 @@ import me.lifeoferic.mplay.models.Music;
  */
 public class MPlayerView extends LinearLayout {
 
+	private static final String TAG = MPlayerView.class.getSimpleName();
+
 	private ImageButton mBackButton;
 	private ImageButton mPlayButton;
 	private ImageButton mNextButton;
@@ -27,27 +34,33 @@ public class MPlayerView extends LinearLayout {
 	private TextView mTitleView;
 	private TextView mArtistView;
 	private TextView mDurationView;
+	private TextView mCurrentTimeView;
 	private SeekBar mSeekBar;
+	private Timer mPlayTimer;
+	private Context mContext;
 
 	private MainActivity.MusicActivityListener mFragmentListener;
 
 	public MPlayerView(Context context) {
 		super(context);
-		initialize();
+		initialize(context);
 	}
 
 	public MPlayerView(Context context, AttributeSet attrs) {
 		super(context, attrs);
-		initialize();
+		initialize(context);
 	}
 
 	public MPlayerView(Context context, AttributeSet attrs, int defStyleAttr) {
 		super(context, attrs, defStyleAttr);
-		initialize();
+		initialize(context);
 	}
 
-	private void initialize() {
+	private void initialize(Context context) {
+		mContext = context;
+		mPlayTimer = new Timer();
 		setupViews();
+		setupSeekbar();
 		setupListeners();
 	}
 
@@ -68,6 +81,7 @@ public class MPlayerView extends LinearLayout {
 		mTitleView = (TextView) findViewById(R.id.title);
 		mArtistView = (TextView) findViewById(R.id.artist);
 		mDurationView = (TextView) findViewById(R.id.duration);
+		mCurrentTimeView = (TextView) findViewById(R.id.current_time);
 		mSeekBar = (SeekBar) findViewById(R.id.seekbar);
 	}
 
@@ -112,20 +126,68 @@ public class MPlayerView extends LinearLayout {
 		});
 	}
 
-	public void setMusicInfo(Music music) {
+	private void setupSeekbar() {
+		mSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+			@Override
+			public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+				//if (fromUser) {
+				//seekTo(progress);
+			}
 
+			@Override
+			public void onStartTrackingTouch(SeekBar seekBar) {
+
+			}
+
+			@Override
+			public void onStopTrackingTouch(SeekBar seekBar) {
+
+			}
+		});
+	}
+
+	public void setMusicInfo(final Music music) {
 		mTitleView.setText(music.getTitle());
 		mArtistView.setText(music.getArtist());
 		mDurationView.setText(Utils.getFormattedTimeString(music.getLength()));
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				long currentPosition = 0;
+				boolean musicThreadFinished = false;
+				while (!musicThreadFinished) {
+					try {
+						Thread.sleep(1000);
+						Log.d(TAG, "Thread sleeping");
+						currentPosition = PlayerTimer.getInstance().getCurrentTime();
+					} catch (Exception e) {
+						return;
+					}
+					final int total = (int) music.getLength() / 1000;
+					final String currentTime = Utils.getFormattedTimeString(currentPosition);
+
+					mSeekBar.setMax(total); //song duration
+					mSeekBar.setProgress((int) currentPosition / 1000);  //for current song progress
+					((Activity) mContext).runOnUiThread(new Runnable() {
+						@Override
+						public void run() {
+							mCurrentTimeView.setText(currentTime);
+						}
+					});
+
+//					mSeekBar.setSecondaryProgress(getBufferPercentage());   // for buffer progress
+					if (currentPosition == total) {
+						musicThreadFinished = true;
+					}
+				}
+
+			Log.d(TAG, "Music thread finished");
+			}
+		}).start();
 	}
 
 	public void handlePlay() {
 		mPlayButton.setSelected(true);
 		mPlayButton.setImageResource(R.drawable.ic_action_pause_circle_outline);
-	}
-
-	public void handlePause() {
-		mPlayButton.setSelected(false);
-		mPlayButton.setImageResource(R.drawable.ic_action_play_circle_outline);
 	}
 }

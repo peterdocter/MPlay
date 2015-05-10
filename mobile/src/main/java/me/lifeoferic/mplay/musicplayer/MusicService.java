@@ -18,6 +18,7 @@ import java.io.IOException;
 
 import me.lifeoferic.mplay.MainActivity;
 import me.lifeoferic.mplay.MusicPlayerManager;
+import me.lifeoferic.mplay.PlayerTimer;
 import me.lifeoferic.mplay.R;
 import me.lifeoferic.mplay.models.Music;
 
@@ -135,7 +136,8 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 					currentSong);
 			player.setDataSource(getApplicationContext(), trackUri);
 			player.prepare();
-			player.start();
+			PlayerTimer.getInstance().reset();
+			play();
 			songTitle = mCurrentMusic.getTitle();
 
 		} catch (IllegalArgumentException|IllegalStateException|IOException e) {
@@ -156,6 +158,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 	}
 
 	public void pause(){
+		PlayerTimer.getInstance().pause();
 		player.pause();
 	}
 
@@ -164,6 +167,7 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 	}
 
 	public void play() {
+		PlayerTimer.getInstance().start();
 		player.start();
 	}
 
