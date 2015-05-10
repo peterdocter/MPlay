@@ -11,13 +11,13 @@ import android.net.Uri;
 import android.os.Binder;
 import android.os.IBinder;
 import android.os.PowerManager;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Random;
 
 import me.lifeoferic.mplay.MainActivity;
+import me.lifeoferic.mplay.MusicPlayerManager;
 import me.lifeoferic.mplay.R;
 import me.lifeoferic.mplay.models.Music;
 
@@ -33,14 +33,12 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 	private static final int NOTIFY_ID = 1;
 
 	private MediaPlayer player;
-	private ArrayList<Music> musicList;
-	private int currentSongPosition;
 	private final IBinder musicBind = new MusicBinder();
+	private Music mCurrentMusic;
 
 	@Override
 	public void onCreate() {
 		super.onCreate();
-		currentSongPosition = 0;
 		initMusicPlayer();
 	}
 
@@ -89,9 +87,10 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 	@Override
 	public void onCompletion(MediaPlayer mp) {
 		Log.d(TAG, "onCompletion");
-			releaseMediaPlayer();
-			initMusicPlayer();
-			playNext();
+		releaseMediaPlayer();
+		initMusicPlayer();
+		Intent intent = new Intent(MusicPlayerManager.PLAY_NEXT);
+		LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
 	}
 
 	@Override
@@ -124,74 +123,24 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 		player.setOnErrorListener(this);
 	}
 
-	public void setList(ArrayList<Music> songs) {
-		musicList = songs;
-	}
-
-	public void setSong(int songIndex){
-		currentSongPosition = songIndex;
-	}
-
-	public class MusicBinder extends Binder {
-		public MusicService getService() {
-			return MusicService.this;
-		}
-	}
-
-	public void playSong() {
-		Log.d(TAG, "playSong: " + currentSongPosition);
-
+	public void playSong(Music music) {
+		Log.d(TAG, "playSong: " + music.getTitle());
+		mCurrentMusic = music;
 		try {
 			player.reset();
-			Music playSong = musicList.get(currentSongPosition);
-			Log.d(TAG, "songLength: " + playSong.getLength());
-			songTitle = playSong.getTitle();
-			long currentSong = playSong.getID();
+			songTitle = mCurrentMusic.getTitle();
+			long currentSong = mCurrentMusic.getID();
 			Uri trackUri = ContentUris.withAppendedId(
 					android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
 					currentSong);
 			player.setDataSource(getApplicationContext(), trackUri);
 			player.prepare();
 			player.start();
-			// Displaying Song title
-			songTitle = playSong.getTitle();
-//			songTitleLabel.setText(songTitle);
+			songTitle = mCurrentMusic.getTitle();
 
-			// Changing Button Image to pause image
-//			btnPlay.setImageResource(R.drawable.btn_pause);
-
-			// set Progress bar values
-//			songProgressBar.setProgress(0);
-//			songProgressBar.setMax(100);
-
-			// Updating progress bar
-//			updateProgressBar();
 		} catch (IllegalArgumentException|IllegalStateException|IOException e) {
 			e.printStackTrace();
 		}
-	}
-
-	public void playPrev() {
-		Log.d(TAG, "playPrev");
-		if (currentSongPosition > 0) {
-			currentSongPosition = currentSongPosition - 1;
-		} else {
-			// play last song
-			currentSongPosition = musicList.size() - 1;
-		}
-		playSong();
-	}
-
-	public void playNext() {
-		Log.d(TAG, "playNext");
-
-		if (currentSongPosition < (musicList.size() - 1)) {
-			currentSongPosition = currentSongPosition + 1;
-		} else {
-			// play first song
-			currentSongPosition = 0;
-		}
-		playSong();
 	}
 
 	public int getPosition(){
@@ -214,7 +163,13 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 		player.seekTo(position);
 	}
 
-	public void play(){
+	public void play() {
 		player.start();
+	}
+
+	public class MusicBinder extends Binder {
+		public MusicService getService() {
+			return MusicService.this;
+		}
 	}
 }

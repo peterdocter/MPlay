@@ -2,13 +2,16 @@ package me.lifeoferic.mplay;
 
 import android.app.Fragment;
 import android.app.FragmentManager;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarActivity;
@@ -38,14 +41,17 @@ public class MainActivity extends ActionBarActivity {
 	private DrawerLayout mDrawerLayout;
 	private Toolbar mToolbar;
 	private ActionBarDrawerToggle mDrawerToggle;
+
 	private MPlayerView mMusicPlayerView;
 
-	private ArrayList<Music> mMusicList;
 	private boolean isPaused = false;
 	private boolean isPlaybackPaused = false;
 	private MusicService mMusicService;
 	private boolean isMusicBound = false;
 	private Intent mPlayIntent;
+
+	private ArrayList<Music> mMusicList;
+	private int mCurrentSongIndex;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -74,12 +80,16 @@ public class MainActivity extends ActionBarActivity {
 	@Override
 	protected void onResume() {
 		super.onResume();
+		IntentFilter intentFilter = new IntentFilter();
+		intentFilter.addAction(MusicPlayerManager.PLAY_NEXT);
+		LocalBroadcastManager.getInstance(this).registerReceiver(serviceReceiver, intentFilter);
 		playerOnResume();
 	}
 
 	@Override
 	protected void onPause() {
 		super.onPause();
+		LocalBroadcastManager.getInstance(this).unregisterReceiver(serviceReceiver);
 		playerOnPause();
 	}
 
@@ -171,7 +181,7 @@ public class MainActivity extends ActionBarActivity {
 	/* Music player components */
 
 	private void playerOnStart() {
-		mMusicPlayerView.setMusicFragmentListener(musicFragmentListener);
+		mMusicPlayerView.setMusicFragmentListener(musicActivityListener);
 		if (mPlayIntent == null) {
 			mPlayIntent = new Intent(this, MusicService.class);
 			bindService(mPlayIntent, musicConnection, Context.BIND_AUTO_CREATE);
@@ -193,15 +203,20 @@ public class MainActivity extends ActionBarActivity {
 		mMusicService = null;
 	}
 
+	public MPlayerView getMusicPlayerView() {
+		return mMusicPlayerView;
+	}
+
 	public void songPicked(ArrayList<Music> musicList){
 		Log.d(TAG, "song picked");
 		mMusicList = musicList;
-		mMusicService.setList(mMusicList);
-		mMusicService.setSong(0);
-		mMusicService.playSong();
+		mCurrentSongIndex = 0;
+		mMusicService.playSong(mMusicList.get(mCurrentSongIndex));
 		if (isPlaybackPaused) {
 			isPlaybackPaused = false;
 		}
+		mMusicPlayerView.setMusicInfo(mMusicList.get(mCurrentSongIndex));
+		mMusicPlayerView.handlePlay();
 	}
 
 	public void openFragment(Fragment fragment) {
@@ -284,7 +299,39 @@ public class MainActivity extends ActionBarActivity {
 		}
 	};
 
-	private MusicFragmentListener musicFragmentListener = new MusicFragmentListener() {
+	public void playNext() {
+		if (mMusicList.size() > 0) {
+			if (mCurrentSongIndex < (mMusicList.size() - 1)) {
+				mCurrentSongIndex = mCurrentSongIndex + 1;
+			} else {
+				// play first song
+				mCurrentSongIndex = 0;
+			}
+			mMusicPlayerView.setMusicInfo(mMusicList.get(mCurrentSongIndex));
+			mMusicService.playSong(mMusicList.get(mCurrentSongIndex));
+			if (isPlaybackPaused) {
+				isPlaybackPaused = false;
+			}
+		}
+	}
+
+	public void playPrev() {
+		if (mMusicList.size() > 0) {
+			if (mCurrentSongIndex > 0) {
+				mCurrentSongIndex = mCurrentSongIndex - 1;
+			} else {
+				// play last song
+				mCurrentSongIndex = mMusicList.size() - 1;
+			}
+			mMusicPlayerView.setMusicInfo(mMusicList.get(mCurrentSongIndex));
+			mMusicService.playSong(mMusicList.get(mCurrentSongIndex));
+			if (isPlaybackPaused) {
+				isPlaybackPaused = false;
+			}
+		}
+	}
+
+	private MusicActivityListener musicActivityListener = new MusicActivityListener() {
 		@Override
 		public void play() {
 			if (mMusicList.size() > 0) {
@@ -301,22 +348,12 @@ public class MainActivity extends ActionBarActivity {
 
 		@Override
 		public void next() {
-			if (mMusicList.size() > 0) {
-				mMusicService.playNext();
-				if (isPlaybackPaused) {
-					isPlaybackPaused = false;
-				}
-			}
+			playNext();
 		}
 
 		@Override
 		public void previous() {
-			if (mMusicList.size() > 0) {
-				mMusicService.playPrev();
-				if (isPlaybackPaused) {
-					isPlaybackPaused = false;
-				}
-			}
+			playPrev();
 		}
 
 		@Override
@@ -339,9 +376,8 @@ public class MainActivity extends ActionBarActivity {
 
 		@Override
 		public void onServiceConnected(ComponentName name, IBinder service) {
-			MusicService.MusicBinder binder = (MusicService.MusicBinder)service;
+			MusicService.MusicBinder binder = (MusicService.MusicBinder) service;
 			mMusicService = binder.getService();
-			mMusicService.setList(mMusicList);
 			isMusicBound = true;
 		}
 
@@ -351,7 +387,16 @@ public class MainActivity extends ActionBarActivity {
 		}
 	};
 
-	public interface MusicFragmentListener {
+	private BroadcastReceiver serviceReceiver =new BroadcastReceiver() {
+		public void onReceive(Context context, Intent i) {
+			Log.d(TAG, "Broadcast received: " + i.getAction());
+			if (MusicPlayerManager.PLAY_NEXT.equals(i.getAction())) {
+				playNext();
+			}
+		}
+	};
+
+	public interface MusicActivityListener {
 		void play();
 		void pause();
 		void next();

@@ -11,6 +11,8 @@ import android.widget.TextView;
 
 import me.lifeoferic.mplay.MainActivity;
 import me.lifeoferic.mplay.R;
+import me.lifeoferic.mplay.Utils;
+import me.lifeoferic.mplay.models.Music;
 
 /**
  * Created by socheong on 4/11/15.
@@ -23,10 +25,11 @@ public class MPlayerView extends LinearLayout {
 	private ImageButton mForwardButton;
 	private ImageButton mRewindButton;
 	private TextView mTitleView;
+	private TextView mArtistView;
 	private TextView mDurationView;
 	private SeekBar mSeekBar;
 
-	private MainActivity.MusicFragmentListener mFragmentListener;
+	private MainActivity.MusicActivityListener mFragmentListener;
 
 	public MPlayerView(Context context) {
 		super(context);
@@ -48,7 +51,7 @@ public class MPlayerView extends LinearLayout {
 		setupListeners();
 	}
 
-	public void setMusicFragmentListener(MainActivity.MusicFragmentListener listener) {
+	public void setMusicFragmentListener(MainActivity.MusicActivityListener listener) {
 		mFragmentListener = listener;
 	}
 
@@ -63,6 +66,7 @@ public class MPlayerView extends LinearLayout {
 		mForwardButton = (ImageButton) findViewById(R.id.forward_button);
 
 		mTitleView = (TextView) findViewById(R.id.title);
+		mArtistView = (TextView) findViewById(R.id.artist);
 		mDurationView = (TextView) findViewById(R.id.duration);
 		mSeekBar = (SeekBar) findViewById(R.id.seekbar);
 	}
@@ -86,8 +90,10 @@ public class MPlayerView extends LinearLayout {
 			public void onClick(View view) {
 				view.setSelected(!view.isSelected());
 				if (view.isSelected()) {
+					mPlayButton.setImageResource(R.drawable.ic_action_pause_circle_outline);
 					mFragmentListener.play();
 				} else {
+					mPlayButton.setImageResource(R.drawable.ic_action_play_circle_outline);
 					mFragmentListener.pause();
 				}
 			}
@@ -104,5 +110,22 @@ public class MPlayerView extends LinearLayout {
 				mFragmentListener.rewind();
 			}
 		});
+	}
+
+	public void setMusicInfo(Music music) {
+
+		mTitleView.setText(music.getTitle());
+		mArtistView.setText(music.getArtist());
+		mDurationView.setText(Utils.getFormattedTimeString(music.getLength()));
+	}
+
+	public void handlePlay() {
+		mPlayButton.setSelected(true);
+		mPlayButton.setImageResource(R.drawable.ic_action_pause_circle_outline);
+	}
+
+	public void handlePause() {
+		mPlayButton.setSelected(false);
+		mPlayButton.setImageResource(R.drawable.ic_action_play_circle_outline);
 	}
 }
