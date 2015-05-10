@@ -8,7 +8,6 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.res.Configuration;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -25,7 +24,7 @@ import android.widget.Toast;
 import java.util.ArrayList;
 
 import me.lifeoferic.mplay.models.Music;
-import me.lifeoferic.mplay.musicplayer.MusicPlayerFragment;
+import me.lifeoferic.mplay.musiclist.LibraryFragment;
 import me.lifeoferic.mplay.musicplayer.MusicService;
 import me.lifeoferic.mplay.musicplayer.views.MPlayerView;
 
@@ -47,17 +46,19 @@ public class MainActivity extends ActionBarActivity {
 	private MusicService mMusicService;
 	private boolean isMusicBound = false;
 	private Intent mPlayIntent;
-	private MediaController.MediaPlayerControl mController;
-	Handler mSeekHandler = new Handler();
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+
 		setContentView(R.layout.activity_main);
+
 		mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
 		mToolbar = (Toolbar) findViewById(R.id.toolbar);
 		mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
 		mMusicPlayerView = (MPlayerView) findViewById(R.id.music_player_view);
+
+		mMusicList = new ArrayList<>();
 	}
 
 
@@ -66,8 +67,8 @@ public class MainActivity extends ActionBarActivity {
 		super.onStart();
 		setupActionToolBar();
 		setupDrawerLayout();
-		setupPlayer();
-		openFragment(MusicPlayerFragment.newInstance());
+		playerOnStart();
+		openFragment(LibraryFragment.newInstance());
 	}
 
 	@Override
@@ -93,11 +94,8 @@ public class MainActivity extends ActionBarActivity {
 	public boolean onPrepareOptionsMenu(Menu menu) {
 		// If the nav drawer is open, hide action items related to the content view
 		boolean drawerOpen = mDrawerLayout.isDrawerOpen(GravityCompat.START);
-		//TODO:
-		//		menu.findItem(R.id.action_shuffle).setVisible(!drawerOpen);
-		//		menu.findItem(R.id.action_end).setVisible(!drawerOpen);
-		menu.findItem(R.id.action_shuffle).setVisible(false);
-		menu.findItem(R.id.action_end).setVisible(false);
+		menu.findItem(R.id.action_shuffle).setVisible(!drawerOpen);
+		menu.findItem(R.id.action_end).setVisible(!drawerOpen);
 		return super.onPrepareOptionsMenu(menu);
 	}
 
@@ -147,8 +145,10 @@ public class MainActivity extends ActionBarActivity {
 
 	public void setupActionToolBar() {
 		setSupportActionBar(mToolbar);
-		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-		getSupportActionBar().setHomeButtonEnabled(true);
+		if (getSupportActionBar() != null) {
+			getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+			getSupportActionBar().setHomeButtonEnabled(true);
+		}
 	}
 
 	public void setupDrawerLayout() {
@@ -168,49 +168,33 @@ public class MainActivity extends ActionBarActivity {
 		mDrawerLayout.setDrawerListener(mDrawerToggle);
 	}
 
-	public void openFragment(Fragment fragment) {
-		FragmentManager fragmentManager = getFragmentManager();
-		fragmentManager.beginTransaction().replace(R.id.main_fragment_container, fragment, CURRENT_FRAGMENT).commit();
-		mDrawerLayout.closeDrawer(GravityCompat.START);
-	}
-
 	/* Music player components */
 
-	private ServiceConnection musicConnection = new ServiceConnection(){
-
-		@Override
-		public void onServiceConnected(ComponentName name, IBinder service) {
-			MusicService.MusicBinder binder = (MusicService.MusicBinder)service;
-			mMusicService = binder.getService();
-			mMusicService.setList(mMusicList);
-			isMusicBound = true;
-		}
-
-		@Override
-		public void onServiceDisconnected(ComponentName name) {
-			isMusicBound = false;
-		}
-	};
-
-	public void playNext() {
-		Log.d(TAG, "playNext");
-		mMusicService.playNext();
-		if (isPlaybackPaused) {
-			isPlaybackPaused = false;
+	private void playerOnStart() {
+		mMusicPlayerView.setMusicFragmentListener(musicFragmentListener);
+		if (mPlayIntent == null) {
+			mPlayIntent = new Intent(this, MusicService.class);
+			bindService(mPlayIntent, musicConnection, Context.BIND_AUTO_CREATE);
+			startService(mPlayIntent);
 		}
 	}
 
-	public void playPrev() {
-		Log.d(TAG, "playPrev");
-		mMusicService.playPrev();
-		if (isPlaybackPaused) {
-			isPlaybackPaused = false;
-		}
+	private void playerOnResume() {
+		isPaused = false;
+	}
+
+	private void playerOnPause() {
+		isPaused = true;
+	}
+
+	private void playerOnDestroy() {
+		stopService(mPlayIntent);
+		unbindService(musicConnection);
+		mMusicService = null;
 	}
 
 	public void songPicked(ArrayList<Music> musicList){
 		Log.d(TAG, "song picked");
-		System.out.println("music list size: " + musicList.size());
 		mMusicList = musicList;
 		mMusicService.setList(mMusicList);
 		mMusicService.setSong(0);
@@ -220,106 +204,85 @@ public class MainActivity extends ActionBarActivity {
 		}
 	}
 
-	public void update() {
-//		mSeekBar.setProgress(mController.getCurrentPosition() / 7000);
-		mSeekHandler.postDelayed(run, 1000);
+	public void openFragment(Fragment fragment) {
+		FragmentManager fragmentManager = getFragmentManager();
+		fragmentManager.beginTransaction().replace(R.id.main_fragment_container, fragment, CURRENT_FRAGMENT).commit();
+		mDrawerLayout.closeDrawer(GravityCompat.START);
 	}
 
-	public void stopUpdate() {
-		mSeekHandler.removeCallbacks(run);
-	}
+	private MediaController.MediaPlayerControl mController = new MediaController.MediaPlayerControl() {
 
-	Runnable run = new Runnable() {
-		@Override public void run() {
-			update();
+		@Override
+		public void start() {
+			Log.d(TAG, "start");
+			isPlaybackPaused = false;
+			mMusicService.play();
+		}
+
+		@Override
+		public void pause() {
+			Log.d(TAG, "pause");
+			isPlaybackPaused = true;
+			mMusicService.pause();
+		}
+
+		@Override
+		public int getDuration() {
+			if (mMusicService != null && isMusicBound && mMusicService.isPlaying()) {
+				return mMusicService.getDuration();
+			} else {
+				return 0;
+			}
+		}
+
+		@Override
+		public int getCurrentPosition() {
+			if (mMusicService != null && isMusicBound && mMusicService.isPlaying()) {
+				return mMusicService.getPosition();
+			} else {
+				return 0;
+			}
+		}
+
+		@Override
+		public void seekTo(int i) {
+			Log.d(TAG, "seekTo: " + i);
+			mMusicService.seek(i);
+		}
+
+		@Override
+		public boolean isPlaying() {
+			if (mMusicService != null && isMusicBound) {
+				return mMusicService.isPlaying();
+			}
+			return false;
+		}
+
+		@Override
+		public int getBufferPercentage() {
+			return 0;
+		}
+
+		@Override
+		public boolean canPause() {
+			return true;
+		}
+
+		@Override
+		public boolean canSeekBackward() {
+			return true;
+		}
+
+		@Override
+		public boolean canSeekForward() {
+			return true;
+		}
+
+		@Override
+		public int getAudioSessionId() {
+			return 0;
 		}
 	};
-
-	private void setupPlayer() {
-		mMusicList = new ArrayList<>();
-		mController = new MediaController.MediaPlayerControl() {
-
-			@Override
-			public void start() {
-				Log.d(TAG, "start");
-				isPlaybackPaused = false;
-				mMusicService.play();
-				update();
-			}
-
-			@Override
-			public void pause() {
-				Log.d(TAG, "pause");
-				isPlaybackPaused = true;
-				mMusicService.pause();
-				stopUpdate();
-			}
-
-			@Override
-			public int getDuration() {
-				if (mMusicService != null && isMusicBound && mMusicService.isPlaying()) {
-					return mMusicService.getDuration();
-				} else {
-					return 0;
-				}
-			}
-
-			@Override
-			public int getCurrentPosition() {
-				if (mMusicService != null && isMusicBound && mMusicService.isPlaying()) {
-					return mMusicService.getPosition();
-				} else {
-					return 0;
-				}
-			}
-
-			@Override
-			public void seekTo(int i) {
-				Log.d(TAG, "seekTo: " + i);
-				mMusicService.seek(i);
-			}
-
-			@Override
-			public boolean isPlaying() {
-				if (mMusicService != null && isMusicBound) {
-					return mMusicService.isPlaying();
-				}
-				return false;
-			}
-
-			@Override
-			public int getBufferPercentage() {
-				return 0;
-			}
-
-			@Override
-			public boolean canPause() {
-				return true;
-			}
-
-			@Override
-			public boolean canSeekBackward() {
-				return true;
-			}
-
-			@Override
-			public boolean canSeekForward() {
-				return true;
-			}
-
-			@Override
-			public int getAudioSessionId() {
-				return 0;
-			}
-		};
-
-		mMusicPlayerView.setMusicFragmentListener(musicFragmentListener);
-		if (mPlayIntent == null) {
-			mPlayIntent = new Intent(this, MusicService.class);
-			bindService(mPlayIntent, musicConnection, Context.BIND_AUTO_CREATE);
-			startService(mPlayIntent);
-		}
-	}
 
 	private MusicFragmentListener musicFragmentListener = new MusicFragmentListener() {
 		@Override
@@ -339,14 +302,20 @@ public class MainActivity extends ActionBarActivity {
 		@Override
 		public void next() {
 			if (mMusicList.size() > 0) {
-				playNext();
+				mMusicService.playNext();
+				if (isPlaybackPaused) {
+					isPlaybackPaused = false;
+				}
 			}
 		}
 
 		@Override
 		public void previous() {
 			if (mMusicList.size() > 0) {
-				playPrev();
+				mMusicService.playPrev();
+				if (isPlaybackPaused) {
+					isPlaybackPaused = false;
+				}
 			}
 		}
 
@@ -366,29 +335,29 @@ public class MainActivity extends ActionBarActivity {
 		}
 	};
 
-	private void playerOnResume() {
-		if (isPaused) {
-			isPaused = false;
+	private ServiceConnection musicConnection = new ServiceConnection(){
+
+		@Override
+		public void onServiceConnected(ComponentName name, IBinder service) {
+			MusicService.MusicBinder binder = (MusicService.MusicBinder)service;
+			mMusicService = binder.getService();
+			mMusicService.setList(mMusicList);
+			isMusicBound = true;
 		}
-	}
 
-	private void playerOnPause() {
-		isPaused = true;
-	}
-
-	private void playerOnDestroy() {
-		stopService(mPlayIntent);
-		unbindService(musicConnection);
-		mMusicService = null;
-	}
+		@Override
+		public void onServiceDisconnected(ComponentName name) {
+			isMusicBound = false;
+		}
+	};
 
 	public interface MusicFragmentListener {
-		public void play();
-		public void pause();
-		public void next();
-		public void previous();
-		public void rewind();
-		public void forward();
-		public void seekTo(int progress);
+		void play();
+		void pause();
+		void next();
+		void previous();
+		void rewind();
+		void forward();
+		void seekTo(int progress);
 	}
 }

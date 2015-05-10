@@ -24,7 +24,6 @@ public class MPlayerView extends LinearLayout {
 	private ImageButton mRewindButton;
 	private TextView mTitleView;
 	private TextView mDurationView;
-	private TextView mCurrentTimeView;
 	private SeekBar mSeekBar;
 
 	private MainActivity.MusicFragmentListener mFragmentListener;
@@ -47,7 +46,6 @@ public class MPlayerView extends LinearLayout {
 	private void initialize() {
 		setupViews();
 		setupListeners();
-		setupSeekbar();
 	}
 
 	public void setMusicFragmentListener(MainActivity.MusicFragmentListener listener) {
@@ -63,9 +61,9 @@ public class MPlayerView extends LinearLayout {
 		mNextButton = (ImageButton) findViewById(R.id.next_button);
 		mRewindButton = (ImageButton) findViewById(R.id.rewind_button);
 		mForwardButton = (ImageButton) findViewById(R.id.forward_button);
+
 		mTitleView = (TextView) findViewById(R.id.title);
 		mDurationView = (TextView) findViewById(R.id.duration);
-		mCurrentTimeView = (TextView) findViewById(R.id.current_time);
 		mSeekBar = (SeekBar) findViewById(R.id.seekbar);
 	}
 
@@ -104,37 +102,6 @@ public class MPlayerView extends LinearLayout {
 			@Override
 			public void onClick(View view) {
 				mFragmentListener.rewind();
-			}
-		});
-	}
-
-	public void updateSeekbar(long current, long total) {
-		int progress = (int) (100 * current / total);
-		mSeekBar.setProgress(progress);
-	}
-
-	private void setupSeekbar() {
-		mSeekBar.setProgress(0);
-		mSeekBar.setMax(100);
-		mSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-			@Override
-			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-				System.out.println("Progress: " + progress);
-				if (fromUser) {
-					mFragmentListener.seekTo(progress);
-				}
-
-				mSeekBar.setProgress(progress);
-			}
-
-			@Override
-			public void onStartTrackingTouch(SeekBar seekBar) {
-
-			}
-
-			@Override
-			public void onStopTrackingTouch(SeekBar seekBar) {
-				int seekValue = seekBar.getProgress();
 			}
 		});
 	}

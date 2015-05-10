@@ -11,7 +11,6 @@ import android.widget.ListView;
 import me.lifeoferic.mplay.MPlayFragment;
 import me.lifeoferic.mplay.R;
 import me.lifeoferic.mplay.musiclist.LibraryFragment;
-import me.lifeoferic.mplay.musicplayer.MusicPlayerFragment;
 import me.lifeoferic.mplay.about.AboutFragment;
 import me.lifeoferic.mplay.settings.SettingsFragment;
 
@@ -51,18 +50,15 @@ public class NavigationDrawerFragment extends MPlayFragment {
 			public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
 				switch(i) {
 					case 0:
-						getMainActivity().openFragment(MusicPlayerFragment.newInstance());
+						getMainActivity().openFragment(LibraryFragment.newInstance());
 						break;
 					case 1:
 						getMainActivity().openFragment(LibraryFragment.newInstance());
 						break;
 					case 2:
-						getMainActivity().openFragment(LibraryFragment.newInstance());
-						break;
-					case 3:
 						getMainActivity().openFragment(SettingsFragment.newInstance());
 						break;
-					case 4:
+					case 3:
 						getMainActivity().openFragment(AboutFragment.newInstance());
 						break;
 				}

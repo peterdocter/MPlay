@@ -26,12 +26,10 @@ public class NavigationAdapter extends BaseAdapter {
 		mIconArrayList = new ArrayList<>();
 		mIconArrayList.add(null);
 		mIconArrayList.add(null);
-		mIconArrayList.add(null);
 		mIconArrayList.add(R.drawable.ic_action_settings);
 		mIconArrayList.add(R.drawable.ic_action_info);
 
 		mTextArrayList = new ArrayList<>();
-		mTextArrayList.add(R.string.navigation_option_player);
 		mTextArrayList.add(R.string.navigation_option_library);
 		mTextArrayList.add(R.string.navigation_option_playlists);
 		mTextArrayList.add(R.string.navigation_option_settings);
