@@ -36,8 +36,10 @@ public class MPlayerView extends LinearLayout {
 	private TextView mDurationView;
 	private TextView mCurrentTimeView;
 	private SeekBar mSeekBar;
-	private Timer mPlayTimer;
+	private Thread mThread;
 	private Context mContext;
+	private Music mCurrentMusic;
+	private boolean mIsMusicThreadRunning;
 
 	private MainActivity.MusicActivityListener mFragmentListener;
 
@@ -58,7 +60,6 @@ public class MPlayerView extends LinearLayout {
 
 	private void initialize(Context context) {
 		mContext = context;
-		mPlayTimer = new Timer();
 		setupViews();
 		setupSeekbar();
 		setupListeners();
@@ -102,13 +103,21 @@ public class MPlayerView extends LinearLayout {
 		mPlayButton.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View view) {
-				view.setSelected(!view.isSelected());
-				if (view.isSelected()) {
+				Log.d(TAG, "Play button clicked");
+				if (!view.isSelected()) {
+					if (mCurrentMusic != null) {
+						startTimerThread();
+					}
 					mPlayButton.setImageResource(R.drawable.ic_action_pause_circle_outline);
 					mFragmentListener.play();
 				} else {
+					Log.d(TAG, "Timer interrupted");
+					mIsMusicThreadRunning = false;
 					mPlayButton.setImageResource(R.drawable.ic_action_play_circle_outline);
 					mFragmentListener.pause();
+				}
+				if (mCurrentMusic != null) {
+					view.setSelected(!view.isSelected());
 				}
 			}
 		});
@@ -128,46 +137,55 @@ public class MPlayerView extends LinearLayout {
 
 	private void setupSeekbar() {
 		mSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+			boolean fromUser = false;
+
 			@Override
-			public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-				//if (fromUser) {
-				//seekTo(progress);
+			public void onProgressChanged(SeekBar seekBar, int progress, boolean b) {
+				if (fromUser) {
+					//					seekTo(progress);
+				}
 			}
 
 			@Override
 			public void onStartTrackingTouch(SeekBar seekBar) {
-
+				fromUser = true;
 			}
 
 			@Override
 			public void onStopTrackingTouch(SeekBar seekBar) {
-
+				fromUser = false;
 			}
 		});
 	}
 
-	public void setMusicInfo(final Music music) {
+	public void setMusicInfo(Music music) {
+		Log.d(TAG, "set music info");
+		mIsMusicThreadRunning = false;
+		while (mThread != null && mThread.isAlive()) {
+			Log.d(TAG, "kill thread");
+		}
 		mTitleView.setText(music.getTitle());
 		mArtistView.setText(music.getArtist());
 		mDurationView.setText(Utils.getFormattedTimeString(music.getLength()));
-		new Thread(new Runnable() {
+		mCurrentMusic = music;
+		int total = (int) mCurrentMusic.getLength();
+		mSeekBar.setMax(total);
+		mSeekBar.setProgress(0);
+		startTimerThread();
+	}
+
+	private void startTimerThread() {
+		mThread = new Thread(new Runnable() {
 			@Override
 			public void run() {
-				long currentPosition = 0;
-				boolean musicThreadFinished = false;
-				while (!musicThreadFinished) {
-					try {
-						Thread.sleep(1000);
-						Log.d(TAG, "Thread sleeping");
-						currentPosition = PlayerTimer.getInstance().getCurrentTime();
-					} catch (Exception e) {
-						return;
-					}
-					final int total = (int) music.getLength() / 1000;
+				long currentPosition;
+				mIsMusicThreadRunning = true;
+				while (mIsMusicThreadRunning) {
+					currentPosition = PlayerTimer.getInstance().getCurrentTime();
+					final int total = (int) mCurrentMusic.getLength();
 					final String currentTime = Utils.getFormattedTimeString(currentPosition);
 
-					mSeekBar.setMax(total); //song duration
-					mSeekBar.setProgress((int) currentPosition / 1000);  //for current song progress
+					mSeekBar.setProgress((int) currentPosition);  //for current song progress
 					((Activity) mContext).runOnUiThread(new Runnable() {
 						@Override
 						public void run() {
@@ -175,15 +193,16 @@ public class MPlayerView extends LinearLayout {
 						}
 					});
 
-//					mSeekBar.setSecondaryProgress(getBufferPercentage());   // for buffer progress
-					if (currentPosition == total) {
-						musicThreadFinished = true;
+					//					mSeekBar.setSecondaryProgress(getBufferPercentage());   // for buffer progress
+					if (currentPosition >= total) {
+						mIsMusicThreadRunning = false;
 					}
 				}
 
-			Log.d(TAG, "Music thread finished");
+				Log.d(TAG, "Music thread finished");
 			}
-		}).start();
+		});
+		mThread.start();
 	}
 
 	public void handlePlay() {
