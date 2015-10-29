@@ -9,6 +9,6 @@ public class Utils {
 		long secondRawValue = milisecond / 1000;
 		long minute = secondRawValue / 60;
 		long second = secondRawValue % 60;
-		return String.valueOf(minute) + ":" + String.valueOf(second);
+		return String.valueOf(minute) + ":" + String.format("%2d", second);
 	}
 }

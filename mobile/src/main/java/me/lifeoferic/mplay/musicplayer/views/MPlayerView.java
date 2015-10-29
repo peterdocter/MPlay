@@ -10,6 +10,7 @@ import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.Timer;
 
@@ -142,7 +143,7 @@ public class MPlayerView extends LinearLayout {
 			@Override
 			public void onProgressChanged(SeekBar seekBar, int progress, boolean b) {
 				if (fromUser) {
-					//					seekTo(progress);
+					mFragmentListener.seekTo(progress);
 				}
 			}
 
@@ -181,6 +182,13 @@ public class MPlayerView extends LinearLayout {
 				long currentPosition;
 				mIsMusicThreadRunning = true;
 				while (mIsMusicThreadRunning) {
+					if (mCurrentMusic.getLength() > 1000) {
+						try {
+							Thread.sleep(1000);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+					}
 					currentPosition = PlayerTimer.getInstance().getCurrentTime();
 					final int total = (int) mCurrentMusic.getLength();
 					final String currentTime = Utils.getFormattedTimeString(currentPosition);
@@ -208,5 +216,9 @@ public class MPlayerView extends LinearLayout {
 	public void handlePlay() {
 		mPlayButton.setSelected(true);
 		mPlayButton.setImageResource(R.drawable.ic_action_pause_circle_outline);
+	}
+
+	public void displayNoMusicMessage() {
+		Toast.makeText(getContext(), "There is no music in the library", Toast.LENGTH_SHORT).show();
 	}
 }
